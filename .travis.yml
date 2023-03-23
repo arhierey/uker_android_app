@@ -24,11 +24,10 @@ install:
   - pip3 install --upgrade Cython==0.29.19 virtualenv
   - export PATH=$PATH:~/.local/bin/
   - ls -l
-  - yes | buildozer android debug --log_level 2
+  - yes | buildozer android debug --log_level 2 --silent
   - ls -l
   - ls bin/ -l
   - echo "TODO"
   - gem install dpl --pre
   - dpl releases --token $TRAVIS_TOKEN --file "bin/com.arhierey.uker-0.1-armeabi-v7a-debug.apk" --tag_name "v.0.1"
   - echo "TODO 2"
-
