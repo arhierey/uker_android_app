@@ -5,6 +5,18 @@ language: python
 python:
   - 3.8
 
+addons:
+  apt:
+    packages:
+      - python-dev
+      - python-pip
+      - python-setuptools
+  homebrew:
+    packages:
+      - python
+      - pip
+      - setuptools
+
 install:
   - sudo apt -y install python3-distutils
   - sudo apt -y install python3-pip
@@ -24,10 +36,15 @@ install:
   - pip3 install --upgrade Cython==0.29.19 virtualenv
   - export PATH=$PATH:~/.local/bin/
   - ls -l
-  - yes | buildozer android debug --log_level 2 | grep -i -E 'error|warning' > filtered.log
+  - yes | buildozer android debug --log_level 2
   - ls -l
   - ls bin/ -l
   - echo "TODO"
+
+before_script:
+  - gem install logglytravis
+
+script:
+  - logglytravis --api-key=$LOGGLY_TOKEN --subdomain=$LOGGLY_SUBDOMAIN
   - gem install dpl --pre
   - dpl releases --token $TRAVIS_TOKEN --file "bin/com.arhierey.uker-0.1-armeabi-v7a-debug.apk" --tag_name "v.0.1"
-  - echo "TODO 2"
