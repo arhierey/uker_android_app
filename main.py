@@ -1,10 +1,10 @@
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.graphics import Rectangle
+from kivy.uix.spinner import Spinner
 
 
 class StringInstrument:
@@ -70,23 +70,25 @@ class Guitar(StringInstrument):
         return 'guitar with tuning:' + tuning[::-1]
 
 
-class CustomButton(Button):
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
-            self.background_color = (.68, .82, .86, 1)
-        return super().on_touch_down(touch)
-
-    def on_touch_up(self, touch):
-        if self.collide_point(*touch.pos):
-            self.background_color = (.47, .37, .21, 1)
-        return super().on_touch_up(touch)
-
-
 class RootWidget(FloatLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.uke = SopranoUkulele()  # TODO: ensure it's working
+        self.FONT_SIZE = 40
+        self.colors = {
+            'blue': (.68, .82, .86, 1),
+            'sand': (.96, .95, .91, 1),
+            'wet-sand': (.94, .87, .63, 1),
+            'brown': (.47, .37, .21, 1),
+            'light-brown': (.79, .63, .44, 1),
+        }
+        self.spinner_labels = (
+            'what string?',
+            'what fret? (0-11)',
+            'what fret? (12-24)'
+        )
+
+        self.uke = SopranoUkulele()
         self.guitar = Guitar()
 
         self.bind(size=self.update_background, pos=self.update_background)
@@ -94,41 +96,47 @@ class RootWidget(FloatLayout):
             self.background = Rectangle(source='uker_concept_back.png',
                                         size=self.size, pos=self.pos)
 
-        # styles - 929
+        input_layout = BoxLayout(orientation='horizontal', size_hint=(1, .1), pos_hint={'top': 1})
 
-        input_layout = BoxLayout(orientation='vertical', size_hint=(1, .2), pos_hint={'top': 1})
+        # TODO: validate this
+        self.spinner1 = Spinner(
+            size_hint=(.5, 1),
+            text=self.spinner_labels[0],
+            values=('1', '2', '3', '4', '5', '6'),
+            background_normal='', background_color=self.colors['light-brown'],
+        )
+        self.spinner2 = Spinner(
+            size_hint=(.5, 1),
+            text=self.spinner_labels[1],
+            values=(str(i) for i in range((self.guitar.fret_number+1)//2)),
+            background_normal='', background_color=self.colors['light-brown'],
+        )
+        self.spinner3 = Spinner(
+            size_hint=(.5, 1),
+            text=self.spinner_labels[2],
+            values=(str(i) for i in range((self.guitar.fret_number+1)//2, self.guitar.fret_number+1)),
+            background_normal='', background_color=self.colors['light-brown'],
+        )
 
-        input_sub_box1 = BoxLayout(orientation='horizontal', size_hint=(1, .5))
-        input_sub_box2 = BoxLayout(orientation='horizontal', size_hint=(1, .5))
+        input_sub_box2 = BoxLayout(orientation='horizontal', size_hint=(.5, 1))
 
-        self.label_string = Label(text='STRING NUMBER', font_size=20, color=(.47, .37, .21, 1))
-        self.label_fret = Label(text='FRET NUMBER', font_size=20, color=(.47, .37, .21, 1))
+        input_sub_box2.add_widget(self.spinner2)
+        input_sub_box2.add_widget(self.spinner3)
 
-        self.input_string = TextInput(background_normal='', background_color=(0, 0, 0, 0),
-                                      padding=[self.width/2, 0, self.width/2, 0], font_size=20,
-                                      foreground_color=(.47, .37, .21, 1))
-        self.input_fret = TextInput(background_normal='', background_color=(0, 0, 0, 0),
-                                    padding=[self.width/2, 0, self.width/2, 0], font_size=20,
-                                    foreground_color=(.47, .37, .21, 1))
+        input_layout.add_widget(self.spinner1)
 
-        input_sub_box1.add_widget(self.label_string)
-        input_sub_box1.add_widget(self.label_fret)
-
-        input_sub_box2.add_widget(self.input_string)
-        input_sub_box2.add_widget(self.input_fret)
-
-        input_layout.add_widget(input_sub_box1)
         input_layout.add_widget(input_sub_box2)
 
         self.add_widget(input_layout)
 
-        self.convert_button = CustomButton(text='CONVERT', size_hint=(1, .1), pos_hint={'bottom': 1},
-                                           background_normal='', background_color=(.47, .37, .21, 1),
-                                           on_press=self.convert_data, font_size=20)
+        self.convert_button = Button(text='CONVERT', size_hint=(1, .1), pos_hint={'bottom': 1},
+                                     background_normal='', background_color=self.colors['brown'],
+                                     on_press=self.convert_data, font_size=self.FONT_SIZE)
 
         self.add_widget(self.convert_button)
 
-        self.output = Label(text='', size_hint=(1, .8), pos_hint={'top': .9}, font_size=20, color=(.47, .37, .21, 1))
+        self.output = Label(text='', size_hint=(1, .8), pos_hint={'top': .9}, font_size=self.FONT_SIZE,
+                            color=self.colors['brown'])
         self.add_widget(self.output)
 
     def update_background(self, instance, value):
@@ -136,20 +144,28 @@ class RootWidget(FloatLayout):
         self.background.pos = self.pos
 
     def convert_data(self, instance):
-        input1 = self.input_string.text
-        input2 = self.input_fret.text
+        input1 = self.spinner1.text
+        input2 = self.spinner2.text
+        input3 = self.spinner3.text
 
-        self.input_fret.text, self.input_string.text = '', ''
-        try:
-            guitar_note = self.guitar.get_note(int(input1), int(input2))
+        self.spinner1.text = self.spinner_labels[0]
+        self.spinner2.text = self.spinner_labels[1]
+        self.spinner3.text = self.spinner_labels[2]
+
+        guitar_note = ''
+        if input1 == self.spinner_labels[0] and input2 == self.spinner_labels[1] and input3 == self.spinner_labels[2]:
+            output = ''
+        elif input2 != self.spinner_labels[1] and input3 != self.spinner_labels[2]:
+            output = ''
+        else:
+            if input1 != self.spinner_labels[0] and input2 != self.spinner_labels[1]:
+                guitar_note = self.guitar.get_note(int(input1), int(input2))
+            elif input1 != self.spinner_labels[0] and input3 != self.spinner_labels[2]:
+                guitar_note = self.guitar.get_note(int(input1), int(input3))
             uke_str = self.uke.get_strings(guitar_note)
             output = 'Note is ' + guitar_note + '\n' + '\n'.join(
                 {1: 'first', 2: 'second', 3: 'third', 4: 'fourth'}[each[0]] + ' string ' + str(each[1]) + ' fret'
                 for each in uke_str)
-        except ValueError:
-            output = ''
-        except KeyError:
-            output = ''
 
         self.output.text = output
 
