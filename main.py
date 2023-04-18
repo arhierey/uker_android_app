@@ -83,6 +83,7 @@ class RootWidget(FloatLayout):
         super().__init__(**kwargs)
 
         self.FONT_SIZE = 40
+        self.LIL_FONT_SIZE = 25
         self.colors = {
             'blue': (.68, .82, .86, 1),
             'sand': (.96, .95, .91, 1),
@@ -92,8 +93,8 @@ class RootWidget(FloatLayout):
         }
         self.spinner_labels = (
             'what string?',
-            'what fret? (0-11)',
-            'what fret? (12-24)'
+            'what fret?\n(0-11)',
+            'what fret?\n(12-24)'
         )
 
         self.uke = SopranoUkulele()
@@ -109,6 +110,7 @@ class RootWidget(FloatLayout):
         self.spinner1 = Spinner(
             size_hint=(.5, 1),
             text=self.spinner_labels[0],
+            font_size=self.LIL_FONT_SIZE,
             values=('1', '2', '3', '4', '5', '6'),
             background_normal='', background_color=self.colors['light-brown'],
             option_cls=CustomOption,
@@ -116,6 +118,7 @@ class RootWidget(FloatLayout):
         self.spinner2 = Spinner(
             size_hint=(.5, 1),
             text=self.spinner_labels[1],
+            font_size=self.LIL_FONT_SIZE,
             values=(str(i) for i in range((self.guitar.fret_number+1)//2)),
             background_normal='', background_color=self.colors['light-brown'],
             option_cls=CustomOption,
@@ -123,6 +126,7 @@ class RootWidget(FloatLayout):
         self.spinner3 = Spinner(
             size_hint=(.5, 1),
             text=self.spinner_labels[2],
+            font_size=self.LIL_FONT_SIZE,
             values=(str(i) for i in range((self.guitar.fret_number+1)//2, self.guitar.fret_number+1)),
             background_normal='', background_color=self.colors['light-brown'],
             option_cls=CustomOption,
@@ -146,7 +150,7 @@ class RootWidget(FloatLayout):
         self.add_widget(self.convert_button)
 
         self.output = Label(text='', size_hint=(1, .8), pos_hint={'top': .9}, font_size=self.FONT_SIZE,
-                            color=self.colors['brown'])
+                            halign='center', color=self.colors['brown'])
         self.add_widget(self.output)
 
     def update_background(self, instance, value):
@@ -163,13 +167,16 @@ class RootWidget(FloatLayout):
         input3_filled = input3 != self.spinner_labels[2]
 
         guitar_note = ''
+        sentence = '%s string %s fret makes '
         if input1_filled and (input2_filled != input3_filled):
             if input1_filled and input2_filled:
                 guitar_note = self.guitar.get_note(int(input1), int(input2))
+                sentence = sentence % (input1, input2)
             elif input1_filled and input3_filled:
                 guitar_note = self.guitar.get_note(int(input1), int(input3))
+                sentence = sentence % (input1, input3)
             uke_str = self.uke.get_strings(guitar_note)
-            output = 'Note is ' + guitar_note + '\n' + '\n'.join(
+            output = sentence + guitar_note + '\nOn ukulele:\n' + '\n'.join(
                 {1: 'first', 2: 'second', 3: 'third', 4: 'fourth'}[each[0]] + ' string ' + str(each[1]) + ' fret'
                 for each in uke_str)
         else:
